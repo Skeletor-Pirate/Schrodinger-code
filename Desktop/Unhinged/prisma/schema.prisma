@@ -34,6 +34,11 @@ model User {
   // Relations
   workspaceMembers    WorkspaceMember[]
   auditLogs           AuditLog[]
+  groupMembers        GroupMember[]
+  messagesSent        Message[]
+  notifications       Notification[]
+  settings            Setting[]
+  workspaces          Workspace[]
 
   @@index([email])
   @@index([google_id])
@@ -95,10 +100,268 @@ model Group {
 
   // Relations
   workspace       Workspace @relation(fields: [workspace_id], references: [id])
+  groupMembers    GroupMember[]
+  messages        Message[]
   auditLogs       AuditLog[]
 
   @@index([workspace_id])
   @@index([visibility])
+}
+
+model GroupMember {
+  id        String   @id @default(uuid())
+  group_id  String
+  user_id   String
+  role      String   @default("member") // moderator, member
+  status    String   @default("active") // active, inactive
+  joined_at DateTime @default(now())
+
+  // Relations
+  group     Group @relation(fields: [group_id], references: [id])
+  user      User  @relation(fields: [user_id], references: [id])
+
+  @@unique([group_id, user_id])
+  @@index([group_id])
+  @@index([user_id])
+}
+
+model Message {
+  id            String   @id @default(uuid())
+  workspace_id  String
+  group_id      String
+  sender_id     String
+  content       String
+  content_type  String   @default("text") // text, image, file, voice
+  created_at    DateTime @default(now())
+  edited_at     DateTime?
+  deleted_at    DateTime?
+
+  // Relations
+  sender        User @relation(fields: [sender_id], references: [id])
+  group         Group @relation(fields: [group_id], references: [id])
+  attachments   MessageAttachment[]
+
+  @@index([group_id])
+  @@index([sender_id])
+  @@index([created_at])
+}
+
+model MessageAttachment {
+  id          String @id @default(uuid())
+  message_id  String
+  file_name   String
+  mime_type   String
+  size_bytes  Int
+  storage_key String
+
+  // Relations
+  message     Message @relation(fields: [message_id], references: [id])
+
+  @@index([message_id])
+}
+
+model File {
+  id              String   @id @default(uuid())
+  workspace_id    String
+  uploader_id     String
+  storage_key     String
+  file_name       String
+  mime_type       String
+  size_bytes      Int
+  hash            String?
+  created_at      DateTime @default(now())
+  visibility_scope String   @default("workspace")
+
+  @@index([workspace_id])
+}
+
+model Note {
+  id             String   @id @default(uuid())
+  workspace_id   String
+  group_id       String?
+  title          String
+  body_md        String
+  frontmatter_json String?
+  tags           String[]
+  created_by     String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@index([workspace_id])
+}
+
+model Pin {
+  id          String   @id @default(uuid())
+  group_id    String
+  entity_type String   // message, note, file
+  entity_id   String
+  pinned_by   String
+  pinned_at   DateTime @default(now())
+
+  @@index([group_id])
+}
+
+model MemoryItem {
+  id           String   @id @default(uuid())
+  workspace_id String
+  scope_type   String   // global, group
+  scope_id     String
+  source_type  String   // chat, note
+  source_id    String
+  summary      String
+  embedding_id String?
+  created_at   DateTime @default(now())
+
+  @@index([workspace_id])
+}
+
+model MemorySummary {
+  id           String   @id @default(uuid())
+  workspace_id String
+  group_id     String
+  summary_type String   // daily, weekly
+  summary_md   String
+  period_start DateTime
+  period_end   DateTime
+  created_at   DateTime @default(now())
+
+  @@index([group_id])
+}
+
+model Agent {
+  id             String   @id @default(uuid())
+  workspace_id   String
+  name           String
+  persona        String
+  avatar_url     String?
+  system_prompt  String
+  status         String   @default("active")
+  owner_user_id  String
+  created_at     DateTime @default(now())
+
+  @@index([workspace_id])
+}
+
+model AgentVersion {
+  id           String   @id @default(uuid())
+  agent_id     String
+  version      String
+  config_json  String
+  model_name   String
+  published_at DateTime @default(now())
+
+  @@index([agent_id])
+}
+
+model AgentToolPermission {
+  id         String   @id @default(uuid())
+  agent_id   String
+  tool_name  String
+  allowed    Boolean  @default(true)
+  scope_json String?
+
+  @@index([agent_id])
+}
+
+model AgentRun {
+  id                 String   @id @default(uuid())
+  workspace_id       String
+  group_id           String
+  agent_id           String
+  trigger_message_id String
+  status             String
+  started_at         DateTime @default(now())
+  ended_at           DateTime?
+
+  @@index([agent_id])
+}
+
+model AgentEvent {
+  id           String   @id @default(uuid())
+  agent_run_id String
+  event_type   String
+  payload_json String
+  created_at   DateTime @default(now())
+
+  @@index([agent_run_id])
+}
+
+model Plugin {
+  id             String   @id @default(uuid())
+  workspace_id   String
+  name           String
+  author_user_id String
+  description    String
+  visibility     String   @default("workspace")
+  status         String   @default("active")
+  created_at     DateTime @default(now())
+
+  @@index([workspace_id])
+}
+
+model PluginVersion {
+  id            String   @id @default(uuid())
+  plugin_id     String
+  version       String
+  manifest_json String
+  code_ref      String
+  published_at  DateTime @default(now())
+
+  @@index([plugin_id])
+}
+
+model PluginInstall {
+  id           String   @id @default(uuid())
+  plugin_id    String
+  workspace_id String
+  installed_by String
+  installed_at DateTime @default(now())
+  enabled      Boolean  @default(true)
+
+  @@index([workspace_id])
+}
+
+model PluginPermission {
+  id              String  @id @default(uuid())
+  plugin_id       String
+  permission_name String
+  granted         Boolean @default(true)
+
+  @@index([plugin_id])
+}
+
+model Hackathon {
+  id          String   @id @default(uuid())
+  source_name String
+  title       String
+  summary     String
+  mode        String   // online, in-person, hybrid
+  location    String?
+  deadline    DateTime
+  url         String
+  prize_text  String?
+  team_size   String?
+  tags        String[]
+  created_at  DateTime @default(now())
+
+  @@index([deadline])
+}
+
+model Notification {
+  id         String    @id @default(uuid())
+  user_id    String
+  type       String
+  title      String
+  body       String
+  ref_type   String?
+  ref_id     String?
+  read_at    DateTime?
+  created_at DateTime  @default(now())
+
+  // Relations
+  user       User @relation(fields: [user_id], references: [id])
+
+  @@index([user_id])
 }
 
 model AuditLog {
@@ -114,13 +377,26 @@ model AuditLog {
 
   // Relations
   user         User? @relation(fields: [user_id], references: [id])
+  group        Group? @relation(fields: [resource_id], references: [id])
 
   @@index([user_id])
   @@index([timestamp])
   @@index([action])
 }
 
-// Add any additional models as needed for the platform
+model Setting {
+  id         String   @id @default(uuid())
+  user_id    String
+  key        String
+  value_json String
+  updated_at DateTime @updatedAt
+
+  // Relations
+  user       User @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, key])
+  @@index([user_id])
+}
 
 model Memory {
   id            String   @id @default(uuid())

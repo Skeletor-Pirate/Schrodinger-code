@@ -95,56 +95,77 @@ export const ChatApp: React.FC = () => {
     ]
   });
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputText.trim()) return;
+  // Listen to Server-Sent Events (SSE) message stream
+  React.useEffect(() => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    const baseUrl = origin.includes('3000') ? origin : 'http://localhost:3000';
+    const eventSource = new EventSource(`${baseUrl}/api/messages/stream`);
 
-    const userMsg: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      sender: 'Aryan (You)',
-      content: inputText,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    eventSource.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.type === 'message') {
+          const msg = payload.data;
+          const isAgent = msg.sender?.role === 'assistant' || msg.sender?.email?.includes('agent');
+          const agentType = msg.sender?.email?.includes('orbit') ? 'orbit' : (msg.sender?.email?.includes('icebound') ? 'icebound' : undefined);
+
+          const mappedMsg: ChatMessage = {
+            id: msg.id,
+            sender: msg.sender?.display_name || 'System',
+            isAgent,
+            agentType,
+            content: msg.content,
+            timestamp: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          };
+
+          setMessages((prev) => {
+            const channel = msg.group_id;
+            const existing = prev[channel] || [];
+            if (existing.some(m => m.id === mappedMsg.id)) {
+              return prev;
+            }
+            return {
+              ...prev,
+              [channel]: [...existing, mappedMsg]
+            };
+          });
+        }
+      } catch (err) {
+        console.error('Error parsing stream message:', err);
+      }
     };
 
-    setMessages((prev) => ({
-      ...prev,
-      [activeChannel]: [...(prev[activeChannel] || []), userMsg]
-    }));
+    return () => {
+      eventSource.close();
+    };
+  }, []);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputText.trim()) return;
 
     const currentText = inputText;
     setInputText('');
 
-    // Simulate Agent Auto-Response in DMs or when tagging bots
-    if (activeChannel === 'orbit-dm' || currentText.toLowerCase().includes('@orbit')) {
-      setTimeout(() => {
-        const orbitReply: ChatMessage = {
-          id: `reply-${Date.now()}`,
-          sender: 'Orbit Agent',
-          isAgent: true,
-          agentType: 'orbit',
-          content: `Note taken. I processed "${currentText}" and committed the summary to Obsidian Vault (memories/decisions.md).`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        setMessages((prev) => ({
-          ...prev,
-          [activeChannel]: [...(prev[activeChannel] || []), orbitReply]
-        }));
-      }, 1000);
-    } else if (activeChannel === 'icebound-dm' || currentText.toLowerCase().includes('@icebound')) {
-      setTimeout(() => {
-        const iceReply: ChatMessage = {
-          id: `reply-${Date.now()}`,
-          sender: 'Icebound Agent',
-          isAgent: true,
-          agentType: 'icebound',
-          content: `Interesting proposition! Running diagnostic on "${currentText}". Conclusion: High potential, low sleep guaranteed. Logged to neural brain!`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        setMessages((prev) => ({
-          ...prev,
-          [activeChannel]: [...(prev[activeChannel] || []), iceReply]
-        }));
-      }, 1200);
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    const baseUrl = origin.includes('3000') ? origin : 'http://localhost:3000';
+
+    try {
+      await fetch(`${baseUrl}/api/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          workspaceId: 'ws-default',
+          groupId: activeChannel,
+          senderId: 'usr-1',
+          content: currentText,
+          contentType: 'text'
+        })
+      });
+    } catch (err) {
+      console.error('Error sending message:', err);
     }
   };
 

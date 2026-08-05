@@ -37,6 +37,8 @@ app.get('/health', (req, res) => {
   });
 });
 
+const messageService = require('./services/message-service');
+
 // API routes
 app.use('/api/users', userManagementService);
 app.use('/api/workspaces', workspaceManagementService);
@@ -48,6 +50,7 @@ app.use('/api/compliance', complianceService);
 app.use('/api/vault-sync', vaultSyncWorker);
 app.use('/api/conflict-resolution', conflictResolutionService);
 app.use('/api/plugin-security', pluginSecurityService);
+app.use('/api/messages', messageService);
 
 // Root endpoint
 app.get('/', (req, res) => {
