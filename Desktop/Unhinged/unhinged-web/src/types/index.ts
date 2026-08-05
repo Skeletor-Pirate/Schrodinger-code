@@ -4,15 +4,13 @@
 
 export type AppId = 
   | 'chat' 
-  | 'orbit' 
-  | 'icebound' 
+  | 'files' // Obsidian Brain
   | 'studio' 
   | 'marketplace' 
   | 'hackathons' 
   | 'profile' 
   | 'settings' 
   | 'admin' 
-  | 'files' 
   | 'search';
 
 export interface AppDefinition {

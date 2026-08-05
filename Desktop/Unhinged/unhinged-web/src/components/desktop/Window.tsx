@@ -6,6 +6,7 @@ import { WindowState } from '../../types';
 import { useDesktopStore } from '../../store/desktopStore';
 import { DynamicIcon } from '../DynamicIcon';
 import { APPS } from '../../config/apps';
+import { AppRenderer } from '../apps/AppRenderer';
 
 interface WindowProps {
   windowState: WindowState;
@@ -119,7 +120,7 @@ export const Window: React.FC<WindowProps> = ({ windowState, children }) => {
         className="window-content flex-1 overflow-hidden flex flex-col bg-[#0b0b11]"
         onMouseDown={() => focusWindow(id)}
       >
-        {children}
+        {children || <AppRenderer appId={appId} />}
       </div>
     </Rnd>
   );

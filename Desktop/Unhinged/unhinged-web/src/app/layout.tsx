@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { StartupSequence } from "@/components/StartupSequence";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Unhinged OS",
-  description: "The AI-powered team collaboration platform",
+  title: "UNHINGED OS — Team Collaboration Web Operating System",
+  description:
+    "A futuristic Windows-like web operating system for teams with AI agents, Obsidian-backed memory, realtime chat, and plugin marketplace.",
 };
 
 export default function RootLayout({
@@ -28,9 +28,8 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col overflow-hidden">
-        <StartupSequence />
-        <div className="flex-1 overflow-hidden">{children}</div>
+      <body className="h-full overflow-hidden bg-[#0a0a0f]">
+        {children}
       </body>
     </html>
   );
