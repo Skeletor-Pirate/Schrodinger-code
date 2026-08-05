@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unhinged-redis
+  namespace: unhinged
+  labels:
+    app: unhinged-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unhinged-redis
+  template:
+    metadata:
+      labels:
+        app: unhinged-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+              name: redis
+          command:
+            - redis-server
+            - "--appendonly"
+            - "yes"
+          volumeMounts:
+            - name: redis-storage
+              mountPath: /data
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "200m"
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+      volumes:
+        - name: redis-storage
+          persistentVolumeClaim:
+            claimName: unhinged-redis-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unhinged-redis
+  namespace: unhinged
+  labels:
+    app: unhinged-redis
+spec:
+  selector:
+    app: unhinged-redis
+  ports:
+    - port: 6379
+      targetPort: redis
+  clusterIP: None
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: unhinged-redis-pvc
+  namespace: unhinged
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard
