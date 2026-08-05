@@ -8,10 +8,10 @@ export const SettingsApp: React.FC = () => {
   const { wallpaper, setWallpaper } = useDesktopStore();
 
   const wallpapers = [
-    { id: 'default', name: 'Cyberpunk Neon', gradient: 'radial-gradient(ellipse at top, #1a103c, #0a0a0f)' },
-    { id: 'deep-space', name: 'Deep Space', gradient: 'radial-gradient(ellipse at bottom, #091e3a, #000000)' },
-    { id: 'obsidian-purple', name: 'Obsidian Velvet', gradient: 'radial-gradient(circle at center, #2e1065, #09090b)' },
-    { id: 'midnight-glass', name: 'Midnight Glass', gradient: 'linear-gradient(135deg, #111827, #030712)' }
+    { id: 'default', name: 'Charcoal Minimal', gradient: '#0b0c10' },
+    { id: 'deep-space', name: 'Midnight Matte', gradient: '#090a0f' },
+    { id: 'obsidian-purple', name: 'Dark Velvet', gradient: '#0a0514' },
+    { id: 'midnight-glass', name: 'Flat Obsidian', gradient: '#0f1015' }
   ];
 
   return (

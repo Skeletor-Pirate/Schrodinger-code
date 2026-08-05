@@ -99,18 +99,21 @@ html, body {
   -webkit-backdrop-filter: blur(24px) saturate(1.4);
 }
 
-/* ===== Desktop Wallpaper Presets ===== */
+/* ===== Desktop Wallpaper Presets (Clean, Minimalist Solid Matts) ===== */
 .wallpaper-default {
-  background: radial-gradient(ellipse at 20% 50%, #1a103c 0%, #0a0a0f 60%, #050510 100%);
+  background-color: #0b0c10;
+  background-image: radial-gradient(circle at 100% 100%, #161720 0%, #0b0c10 80%);
 }
 .wallpaper-deep-space {
-  background: radial-gradient(ellipse at 80% 20%, #091e3a 0%, #000814 50%, #000000 100%);
+  background-color: #090a0f;
+  background-image: radial-gradient(circle at 0% 0%, #12131a 0%, #090a0f 90%);
 }
 .wallpaper-obsidian-purple {
-  background: radial-gradient(circle at 50% 40%, #2e1065 0%, #1e0a4a 40%, #09090b 100%);
+  background-color: #0a0514;
+  background-image: radial-gradient(circle at 50% 0%, #150b28 0%, #0a0514 85%);
 }
 .wallpaper-midnight-glass {
-  background: linear-gradient(135deg, #111827 0%, #0f172a 40%, #030712 100%);
+  background-color: #0f1015;
 }
 
 /* ===== Window Open/Close Animations ===== */

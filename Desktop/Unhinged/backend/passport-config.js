@@ -44,22 +44,28 @@ passport.use(
         }
 
         if (existingUser) {
+          // Block login if user is suspended or banned
+          if (existingUser.status === 'suspended' || existingUser.status === 'banned') {
+            return done(new Error('Access revoked. Your account has been suspended or banned.'), null);
+          }
           // User exists, return the user
           return done(null, existingUser);
         } else {
-          // New user - create pending approval record
+          // Check if this is the bootstrapped admin account
+          const isAdminEmail = email === 'aryanarora26110@gmail.com';
+          
           const newUserData = {
             email: email,
             display_name: displayName || email.split('@')[0],
             avatar_url: photoUrl,
             google_id: googleId,
-            status: 'pending', // Requires admin approval
-            role: 'member', // Default role
+            status: isAdminEmail ? 'active' : 'pending', // Admin is auto-active, others require approval
+            role: isAdminEmail ? 'admin' : 'member', // Admin role for the creator, others default to member
             primary_workspace_id: null // Will be set during onboarding
           };
 
           try {
-            // Create pending user record
+            // Create user record
             const pendingUser = await userManagementService.createPendingUser(newUserData);
             return done(null, pendingUser);
           } catch (error) {
