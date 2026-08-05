@@ -11,8 +11,13 @@ let redisClient;
 
 // Initialize Redis client
 const initRedis = () => {
+  const redisUrl = process.env.REDIS_URL;
+  if (!redisUrl) {
+    throw new Error('REDIS_URL environment variable is required');
+  }
+
   redisClient = redis.createClient({
-    url: process.env.REDIS_URL || 'redis://localhost:6379'
+    url: redisUrl
   });
 
   redisClient.on('error', (err) => {
@@ -32,12 +37,22 @@ const sessionStore = new RedisStore({
   ttl: 600 // 10 minutes
 });
 
+// Validate session secret
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('SESSION_SECRET environment variable is required in production');
+  }
+  // In development, we'll allow a fallback but log a warning
+  console.warn('WARNING: SESSION_SECRET not set using fallback. This is insecure and should not be used in production.');
+}
+
 /**
  * Session middleware configuration
  */
 const sessionConfig = session({
   store: sessionStore,
-  secret: process.env.SESSION_SECRET || 'fallback-secret-change-in-production',
+  secret: sessionSecret || 'fallback-secret-for-development-only-change-in-production',
   resave: false,
   saveUninitialized: false,
   cookie: {

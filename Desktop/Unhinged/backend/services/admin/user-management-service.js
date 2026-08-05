@@ -3,12 +3,15 @@
  * Handles user-related operations for the admin console
  */
 
+const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
 const prisma = new PrismaClient();
+const router = express.Router();
 
+// Helper class for business logic (kept for reuse)
 class UserManagementService {
   /**
    * Get all users with optional filtering
@@ -165,7 +168,7 @@ class UserManagementService {
 
   /**
    * Update user role
-   @param {string} userId - User ID
+   * @param {string} userId - User ID
    * @param {string} role - New role (admin, moderator, member, guest)
    * @returns {Promise<Object>} Updated user
    */
@@ -364,13 +367,236 @@ class UserManagementService {
 
     // In a production system, you would send this token via email
     // For now, we'll return it (in reality, this should be sent via email only)
+    // NOTE: In production, this token should ONLY be sent via email and NEVER returned in API response
 
     return {
       success: true,
-      token: resetToken, // In production, this would be sent via email and not returned
-      message: 'Password reset token generated. Check your email for further instructions.'
+      // token: resetToken, // REMOVED FOR SECURITY - token should only be sent via email
+      message: 'If the email exists and is associated with a Google account, you will receive reset instructions via email'
     };
   }
 }
 
-module.exports = new UserManagementService();
+// Create service instance
+const userService = new UserManagementService();
+
+// GET /api/users - Get all users with filtering
+router.get('/', async (req, res) => {
+  try {
+    const filters = {
+      role: req.query.role,
+      status: req.query.status,
+      searchTerm: req.query.searchTerm,
+      page: parseInt(req.query.page) || 1,
+      limit: parseInt(req.query.limit) || 50
+    };
+
+    const result = await userService.getUsers(filters);
+    res.json(result);
+  } catch (error) {
+    console.error('Error getting users:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/users/:id - Get user by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // Validate that the userId is a valid UUID format
+    if (!userId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID format' });
+    }
+
+    const user = await userService.getUserById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error getting user by ID:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/users/email/:email - Get user by email
+router.get('/email/:email', async (req, res) => {
+  try {
+    const email = req.params.email;
+
+    // Basic email format validation
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    const user = await userService.getUserByEmail(email);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error getting user by email:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/users/google/:googleId - Get user by Google ID
+router.get('/google/:googleId', async (req, res) => {
+  try {
+    const googleId = req.params.googleId;
+
+    if (!googleId) {
+      return res.status(400).json({ error: 'Google ID is required' });
+    }
+
+    const user = await userService.getUserByGoogleId(googleId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error getting user by Google ID:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/users/:id/status - Update user status
+router.patch('/:id/status', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { status } = req.body;
+
+    // Validate userId format
+    if (!userId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID format' });
+    }
+
+    // Validate status
+    const validStatuses = ['pending', 'active', 'suspended', 'banned'];
+    if (!status || !validStatuses.includes(status)) {
+      return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+    }
+
+    const updatedUser = await userService.updateUserStatus(userId, status);
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    if (error.message === 'Invalid status') {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/users/:id/role - Update user role
+router.patch('/:id/role', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { role } = req.body;
+
+    // Validate userId format
+    if (!userId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID format' });
+    }
+
+    // Validate role
+    const validRoles = ['admin', 'moderator', 'member', 'guest'];
+    if (!role || !validRoles.includes(role)) {
+      return res.status(400).json({ error: `Invalid role. Must be one of: ${validRoles.join(', ')}` });
+    }
+
+    const updatedUser = await userService.updateUserRole(userId, role);
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Error updating user role:', error);
+    if (error.message === 'Invalid role') {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/users/:id - Soft delete user
+router.delete('/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // Validate userId format
+    if (!userId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID format' });
+    }
+
+    const deletedUser = await userService.deleteUser(userId);
+    res.json(deletedUser);
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/users/:id/restore - Restore soft-deleted user
+router.patch('/:id/restore', async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // Validate userId format
+    if (!userId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID format' });
+    }
+
+    const restoredUser = await userService.restoreUser(userId);
+    res.json(restoredUser);
+  } catch (error) {
+    console.error('Error restoring user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/users/stats - Get user statistics
+router.get('/stats', async (req, res) => {
+  try {
+    const stats = await userService.getUserStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('Error getting user stats:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/users/reset-password - Initiate password reset (for Google users only)
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Basic email format validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // For security, don't reveal whether the email exists
+    const result = await userService.initiatePasswordReset(email);
+
+    // In production, the actual token would be sent via email and not included in response
+    // We're returning a generic message for security
+    res.json({
+      success: result.success,
+      message: result.message
+    });
+  } catch (error) {
+    console.error('Error initiating password reset:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+module.exports = router;

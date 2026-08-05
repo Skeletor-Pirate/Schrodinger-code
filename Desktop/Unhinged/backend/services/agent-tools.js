@@ -9,21 +9,31 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
 // Import services for real implementations
-const { prisma } = require('./admin/user-management-service');
-const { vaultPath } = process.env;
-
-// Mock implementations - in a real system, these would check permissions,
-// rate limits, and integrate with actual services
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 class AgentTools {
   constructor() {
-    this.vaultPath = process.env.VAULT_PATH || './vault';
-    this.rateLimits = new Map(); // In production, use Redis for distributed rate limiting
+    // Validate required environment variables
+    const vaultPath = process.env.VAULT_PATH;
+    if (!vaultPath) {
+      throw new Error('VAULT_PATH environment variable is required');
+    }
+    this.vaultPath = vaultPath;
+
+    // In production, use Redis for distributed rate limiting
+    // For now, we'll use in-memory but note this is not suitable for production
+    this.rateLimits = new Map();
   }
 
   // Helper to check if tool usage is within rate limits
   async checkRateLimit(agentId, toolName) {
-    // Simplified rate limiting - in production this would be more sophisticated
+    // In production, this should use Redis for distributed rate limiting
+    // For now, we'll use in-memory rate limiting with a warning
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('WARNING: Using in-memory rate limiting in production. This is not suitable for production use.');
+    }
+
     const now = Date.now();
     const windowMs = 60000; // 1 minute window
     const maxRequests = 30; // 30 requests per minute

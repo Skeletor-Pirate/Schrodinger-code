@@ -33,6 +33,15 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Credentials and sensitive files
+*.key
+*.p12
+*.pfx
+aws/
+.aws/
+.gcp/
+service-account*.json
+
 # vercel
 .vercel
 
