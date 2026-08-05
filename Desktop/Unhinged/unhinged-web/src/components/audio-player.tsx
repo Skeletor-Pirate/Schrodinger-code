@@ -37,8 +37,10 @@ export const Audio = ({ src, autoPlay = false, loop = false, volume = 0.5 }: Aud
 
     // Cleanup
     return () => {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
     };
   }, [src, autoPlay, loop, volume]);
 
@@ -47,3 +49,5 @@ export const Audio = ({ src, autoPlay = false, loop = false, volume = 0.5 }: Aud
     <audio ref={audioRef} style={{ display: 'none' }} />
   );
 };
+
+export default Audio;

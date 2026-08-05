@@ -9,13 +9,37 @@ export const StartupSequence = () => {
   const [showDesktop, setShowDesktop] = useState(false);
 
   useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes openUh {
+        0% {
+          opacity: 0;
+          transform: scale(0.2) rotate(-15deg);
+        }
+        50% {
+          opacity: 0.8;
+          transform: scale(1.2) rotate(5deg);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) rotate(0deg);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
     // Sequence: show startup for 3 seconds, then show desktop
     const timer = setTimeout(() => {
       setShowStartup(false);
       setShowDesktop(true);
     }, 3000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
+    };
   }, []);
 
   if (showStartup) {
@@ -57,23 +81,3 @@ export const StartupSequence = () => {
 
   return null;
 };
-
-// Keyframes for the Uh opening animation
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes openUh {
-    0% {
-      opacity: 0;
-      transform: scale(0.2) rotate(-15deg);
-    }
-    50% {
-      opacity: 0.8;
-      transform: scale(1.2) rotate(5deg);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1) rotate(0deg);
-    }
-  }
-`;
-document.head.appendChild(style);

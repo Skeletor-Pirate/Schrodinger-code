@@ -62,13 +62,29 @@ class AgentTools {
 
 const agentTools = new AgentTools();
 
+// Helper to validate and resolve safe vault paths
+const resolveSafeVaultPath = (vaultRoot, userRelativePath, allowedPrefixes) => {
+  const normalizedRelative = path.normalize(userRelativePath).replace(/^(\.\.[\/\\])+/, '');
+  const resolvedPath = path.resolve(vaultRoot, normalizedRelative);
+  const resolvedRoot = path.resolve(vaultRoot);
+
+  if (!resolvedPath.startsWith(resolvedRoot)) {
+    throw new Error(`Path traversal attempt detected: ${userRelativePath}`);
+  }
+
+  const relativeFromRoot = path.relative(resolvedRoot, resolvedPath).replace(/\\/g, '/');
+  const isAllowed = allowedPrefixes.some(prefix => relativeFromRoot.startsWith(prefix));
+  if (!isAllowed) {
+    throw new Error(`Access denied to path: ${userRelativePath}. Allowed prefixes: ${allowedPrefixes.join(', ')}`);
+  }
+
+  return resolvedPath;
+};
+
 // Tool: vault_read
 // Read a markdown file from allowed vault folders
 const vaultReadTool = {
   execute: async (params) => {
-    // In production: check agent permissions for this path
-    // For now: allow reading from certain folders
-
     const allowedPaths = [
       'chats/',
       'memories/',
@@ -81,18 +97,8 @@ const vaultReadTool = {
       'users/'
     ];
 
-    const isAllowed = allowedPaths.some(prefix =>
-      params.path.startsWith(prefix)
-    );
-
-    if (!isAllowed) {
-      return {
-        error: `Access denied to path: ${params.path}. Agent only allowed to read from: ${allowedPaths.join(', ')}`
-      };
-    }
-
     try {
-      const filePath = path.join(agentTools.vaultPath, params.path);
+      const filePath = resolveSafeVaultPath(agentTools.vaultPath, params.path, allowedPaths);
       const content = await fs.readFile(filePath, 'utf8');
 
       await agentTools.logToolUsage('orbit-agent-001', 'vault_read', { path: params.path }, { success: true, length: content.length });
@@ -115,9 +121,6 @@ const vaultReadTool = {
 // Write/update a markdown file in allowed vault folders
 const vaultWriteTool = {
   execute: async (params) => {
-    // In production: check agent permissions for this path
-    // Orbit can write to: summaries/, tasks/, agent-logs/orbit/, inbox/
-
     const allowedPaths = [
       'summaries/',
       'tasks/',
@@ -125,18 +128,8 @@ const vaultWriteTool = {
       'inbox/'
     ];
 
-    const isAllowed = allowedPaths.some(prefix =>
-      params.path.startsWith(prefix)
-    );
-
-    if (!isAllowed) {
-      return {
-        error: `Access denied to path: ${params.path}. Agent only allowed to write to: ${allowedPaths.join(', ')}`
-      };
-    }
-
     try {
-      const filePath = path.join(agentTools.vaultPath, params.path);
+      const filePath = resolveSafeVaultPath(agentTools.vaultPath, params.path, allowedPaths);
 
       // Ensure directory exists
       await fs.mkdir(path.dirname(filePath), { recursive: true });
