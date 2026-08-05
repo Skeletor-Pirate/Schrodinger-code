@@ -24,13 +24,12 @@ Copy `.env.example` to `.env` and populate the following:
   - `REDIS_PASSWORD` (if password protection enabled)
 - **Where to set**: In `.env` file in the project root
 
-#### MinIO Object Storage Configuration
-- **Variables**:
-  - `MINIO_ENDPOINT` (format: host:port, e.g., localhost:9000)
-  - `MINIO_ACCESS_KEY` (access key for MinIO)
-  - `MINIO_SECRET_KEY` (secret key for MinIO)
-  - `MINIO_USE_SSL` (set to false for local http, true for https)
+#### Obsidian Vault Path Configuration
+- **Variable**: `VAULT_PATH` (default: `./vault`)
 - **Where to set**: In `.env` file in the project root
+- **Steps**:
+  1. Specify the path to your local Obsidian vault folder (e.g. `./vault`)
+  2. All agent memories, notes, and summaries will sync directly into this local folder.
 
 #### Google OAuth 2.0 Configuration
 - **Variables**:
@@ -38,8 +37,11 @@ Copy `.env.example` to `.env` and populate the following:
   - `GOOGLE_CLIENT_SECRET` (from Google Cloud Console)
   - `GOOGLE_CALLBACK_URL` (should match what's configured in Google Console)
 
-#### OpenAI API Configuration
-- **Variable**: `OPENAI_API_KEY`
+#### LLM API Integrations Configuration
+- **Variables**:
+  - `OPENAI_API_KEY` (OpenAI platform key)
+  - `GEMINI_API_KEY` (Google Gemini API key)
+  - `GROQ_API_KEY` (Groq API key for low-latency Llama inference)
 - **Where to set**: In `.env` file in the project root
 
 #### Security Configuration

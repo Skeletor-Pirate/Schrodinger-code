@@ -32,17 +32,16 @@ Needed for user signups, logins, and identity verification.
   - **`REDIS_HOST`** (default: `localhost`)
   - **`REDIS_PORT`** (default: `6379`)
   - **`REDIS_PASSWORD`** (optional)
-- **MinIO Object Storage**: S3-compatible local bucket endpoints.
-  - **`MINIO_ENDPOINT`** (e.g., `localhost:9000`)
-  - **`MINIO_ACCESS_KEY`** (default: `minioadmin`)
-  - **`MINIO_SECRET_KEY`** (default: `minioadmin`)
-  - **`MINIO_USE_SSL`** (`false` for HTTP, `true` for HTTPS)
+- **Obsidian Vault Storage Path**: Local file system directory where Obsidian saves markdown notes. Used as the exclusive storage for memories, summaries, tasks, and interaction logs.
+  - **`VAULT_PATH`** (default: `./vault`)
 
 ---
 
 ## 🤖 AI & External Integrations
 
 - **`OPENAI_API_KEY`**: OpenAI platform API key for generating chat completions, LangGraph node execution, and vector embeddings.
+- **`GEMINI_API_KEY`**: Google Gemini API key for running Google-native LLM integrations and agent queries.
+- **`GROQ_API_KEY`**: Groq Cloud API key for ultra-fast, low-latency agent inference execution (e.g., Llama-3-70B).
 - **`RAG_SERVICE_URL`**: FastAPI query endpoints (default: `http://localhost:8001`).
 
 ---
