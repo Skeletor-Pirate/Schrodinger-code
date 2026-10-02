@@ -8,6 +8,7 @@
 [![React](https://img.shields.io/badge/react-19.0-61dafb.svg?style=for-the-badge)](https://react.dev/)
 [![Framer Motion](https://img.shields.io/badge/framer--motion-v12.4-black.svg?style=for-the-badge)](https://www.framer.com/motion/)
 [![Deploy With Vercel](https://img.shields.io/badge/deploy-vercel-black.svg?style=for-the-badge&logo=vercel)](https://vercel.com)
+[![Deploy to Render](https://img.shields.io/badge/deploy-render-46E3B7.svg?style=for-the-badge&logo=render&logoColor=white)](https://render.com/deploy?repo=https://github.com/Skeletor-Pirate/Schrodinger-code)
 [![Deploy With Docker](https://img.shields.io/badge/docker-ready-2496ed.svg?style=for-the-badge&logo=docker)](https://www.docker.com/)
 
 ---
