@@ -1,0 +1,19 @@
+{
+  "name": "schrodingers-codebase",
+  "version": "1.0.0",
+  "description": "Schrödinger's Codebase - Interactive AI & Systems Programming Platform",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && python -m uvicorn server:app --reload",
+    "build": "cd frontend && npm run build",
+    "lint": "cd frontend && npm run lint"
+  },
+  "keywords": ["AI", "ML", "RL", "PPO", "LangGraph", "FUSE", "Transpilation", "Education"],
+  "license": "MIT"
+}

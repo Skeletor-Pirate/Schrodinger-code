@@ -1,0 +1,11 @@
+services:
+  schrodinger:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: schrodinger-platform
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+    restart: unless-stopped
