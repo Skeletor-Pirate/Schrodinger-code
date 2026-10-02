@@ -1,0 +1,18 @@
+services:
+  # Flagship Frontend (Static Site - Free, high performance, global CDN)
+  - type: web
+    name: schrodingers-codebase
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
